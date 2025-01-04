@@ -6,7 +6,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.javatime.CurrentDateTime
 import org.jetbrains.exposed.sql.javatime.datetime
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import org.jetbrains.exposed.sql.transactions.transaction
+import ru.countrystats.database.model.RegisterUserParams
 import ru.countrystats.database.model.User
 import ru.countrystats.util.hashPassword
 
@@ -23,7 +23,8 @@ class UserService {
         override val primaryKey = PrimaryKey(id)
     }
 
-    suspend fun create(user: User): Long = dbQuery {
+    suspend fun create(user: RegisterUserParams): Long = dbQuery {
+
         Users.insert {
             it[email] = user.email
             it[password] = hashPassword(user.password)
@@ -54,6 +55,10 @@ class UserService {
         dbQuery {
             Users.deleteWhere { Users.id eq id }
         }
+    }
+
+    suspend fun userByEmail(email: String): User? = dbQuery {
+        Users.selectAll().where { Users.email eq email }.map(::rowToUser).singleOrNull()
     }
 
     private suspend fun <T> dbQuery(block: suspend () -> T): T =

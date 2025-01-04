@@ -1,13 +1,17 @@
 package ru.countrystats.repository
 
 import io.ktor.http.*
+import org.jetbrains.exposed.exceptions.ExposedSQLException
 import ru.countrystats.database.UserService
-import ru.countrystats.database.model.User
+import ru.countrystats.database.model.LoginUserParams
+import ru.countrystats.database.model.RegisterUserParams
 import ru.countrystats.util.BaseResponse
+import ru.countrystats.util.checkPassword
+import ru.countrystats.util.isValidEmail
 
 interface IUserRepository {
-    suspend fun registerUser(params: User): BaseResponse<Any>
-    suspend fun loginUser(params: User): BaseResponse<Any>
+    suspend fun registerUser(params: RegisterUserParams): BaseResponse<Any>
+    suspend fun loginUser(params: LoginUserParams): BaseResponse<Any>
     suspend fun refreshUserToken(params: TokenPair): BaseResponse<Any>
 }
 
@@ -16,17 +20,22 @@ class UserRepository(
     private val userService: UserService = UserService()
 ) : IUserRepository {
 
-    override suspend fun registerUser(params: User): BaseResponse<Any> {
+    override suspend fun registerUser(params: RegisterUserParams): BaseResponse<Any> {
         return if (params.email.isValidEmail()) {
             if (isEmailExist(params.email)) {
-                BaseResponse.ErrorResponse(errorStatusCode = HttpStatusCode.Conflict, msg = "User with such email is already exist")
+                BaseResponse.ErrorResponse(
+                    errorStatusCode = HttpStatusCode.Conflict,
+                    msg = "User with such email is already exist"
+                )
             } else {
-                val user = userDAO.insert(params)
-                if (user != null) {
-                    val token = JwtConfig.instance.generateToken(user.email)
-                    InMemoryCache.tokens.add(TokenPair(user.email, token))
-                    BaseResponse.SuccessResponse(data = hashMapOf("token" to token))
-                } else {
+                try {
+                    userService.create(params)
+                    BaseResponse.SuccessResponse()
+//                    логика создания и возврата токена
+//                    val token = JwtConfig.instance.generateToken(user.email)
+//                    InMemoryCache.tokens.add(TokenPair(user.email, token))
+//                    BaseResponse.SuccessResponse(data = hashMapOf("token" to token))
+                } catch (e: ExposedSQLException) {
                     BaseResponse.ErrorResponse(msg = "You are already registered")
                 }
             }
@@ -37,12 +46,14 @@ class UserRepository(
 
     override suspend fun loginUser(params: LoginUserParams): BaseResponse<Any> {
         return if (isEmailExist(params.email)) {
-            val user = userDAO.userByEmail(params.email)
+            val user = userService.userByEmail(params.email)
             if (user != null) {
-                if (hash(params.password) == user.password) {
-                    val token = JwtConfig.instance.generateToken(user.email)
-                    InMemoryCache.tokens.add(TokenPair(user.email, token))
-                    BaseResponse.SuccessResponse(data = hashMapOf("token" to token))
+                if (checkPassword(params.password, user.password)) {
+                    BaseResponse.SuccessResponse()
+//                    логика создания и возврата токена
+//                    val token = JwtConfig.instance.generateToken(user.email)
+//                    InMemoryCache.tokens.add(TokenPair(user.email, token))
+//                    BaseResponse.SuccessResponse(data = hashMapOf("token" to token))
                 } else {
                     BaseResponse.ErrorResponse(msg = "Invalid password")
                 }
@@ -54,7 +65,7 @@ class UserRepository(
         }
     }
 
-    override suspend fun refreshTokenUser(params: TokenPair): BaseResponse<Any> {
+    override suspend fun refreshUserToken(params: TokenPair): BaseResponse<Any> {
         TODO("Not yet implemented")
     }
 
@@ -70,6 +81,5 @@ class UserRepository(
 //        }
 //    }
 
-    private suspend fun isEmailExist(email: String): Boolean = userDAO.userByEmail(email) != null
-    private suspend fun isVKidExist(vkid: Long): Boolean = userDAO.userByVKID(vkid) != null
+    private suspend fun isEmailExist(email: String): Boolean = userService.userByEmail(email) != null
 }

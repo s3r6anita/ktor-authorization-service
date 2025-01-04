@@ -10,3 +10,14 @@ data class User(
     val createdAt: LocalDateTime,
     val authToken: String? = null,
 )
+
+data class RegisterUserParams(
+    val email: String,
+    val password: String,
+    val name: String,
+)
+
+data class LoginUserParams(
+    val email: String,
+    val password: String,
+)
