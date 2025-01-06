@@ -7,15 +7,15 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class ApplicationTest {
-
     @Test
-    fun testRoot() = testApplication {
+    fun testRedirectHttps() = testApplication {
         application {
             module()
         }
-        client.get("/").apply {
-            assertEquals(HttpStatusCode.OK, status)
+        val response = client.get("/") {
+            url { protocol = URLProtocol.HTTPS }
         }
+        assertEquals(HttpStatusCode.OK, response.status)
     }
 
 }

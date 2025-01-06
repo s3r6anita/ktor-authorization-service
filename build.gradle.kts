@@ -1,3 +1,4 @@
+val ktor_version: String by project
 val exposed_version: String by project
 val h2_version: String by project
 val kotlin_version: String by project
@@ -35,6 +36,7 @@ dependencies {
 
     implementation("io.ktor:ktor-server-call-logging-jvm")
     implementation("io.ktor:ktor-server-metrics-jvm")
+    implementation("io.ktor:ktor-network-tls-certificates:$ktor_version")
 
     implementation("io.ktor:ktor-server-content-negotiation-jvm")
     implementation("io.ktor:ktor-serialization-gson-jvm")

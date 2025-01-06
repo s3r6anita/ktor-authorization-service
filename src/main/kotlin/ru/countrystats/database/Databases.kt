@@ -9,7 +9,7 @@ import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 import ru.countrystats.database.UserService.Users
 
-fun Application.configureDatabases(embedded: Boolean = false) {
+fun Application.configureDatabases(config: ApplicationConfig, embedded: Boolean = false) {
     if (embedded) {
         log.info("Using embedded H2 database for testing; replace this flag to use postgres")
 
@@ -21,10 +21,10 @@ fun Application.configureDatabases(embedded: Boolean = false) {
         )
     } else {
         Database.connect(
-            driver = environment.config.property("ktor.postgres.driverClassName").getString(),
-            url = environment.config.property("ktor.postgres.url").getString(),
-            user = environment.config.property("ktor.postgres.user").getString(),
-            password = environment.config.property("ktor.postgres.password").getString(),
+            url = config.property("ktor.postgres.url").getString(),
+            driver = config.property("ktor.postgres.driverClassName").getString(),
+            user = config.property("ktor.postgres.user").getString(),
+            password = config.property("ktor.postgres.password").getString(),
         )
 //        Database.connect(HikariDataSource(HikariConfig().apply {
 //            driverClassName = environment.config.property("ktor.postgres.driverClassName").getString()
