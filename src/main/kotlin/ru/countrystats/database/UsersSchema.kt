@@ -8,26 +8,26 @@ import org.jetbrains.exposed.sql.javatime.datetime
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import ru.countrystats.database.model.RegisterUserParams
 import ru.countrystats.database.model.User
-import ru.countrystats.util.hashPassword
+import ru.countrystats.security.hashPassword
 
 class UserService {
 
     object Users : Table() {
         val id = long("id").autoIncrement()
         val email = varchar("email", 50).uniqueIndex()
-        val password = text("password")
-        val authToken = text("authToken")
         val name = varchar("name", 30)
+        val password = text("password")
         val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
+        val refreshToken = text("refresh_token")
 
         override val primaryKey = PrimaryKey(id)
     }
 
-    suspend fun create(user: RegisterUserParams): Long = dbQuery {
-
+    suspend fun create(user: RegisterUserParams, token: String): Long = dbQuery {
         Users.insert {
             it[email] = user.email
             it[password] = hashPassword(user.password)
+            it[refreshToken] = token
             it[name] = user.name
         }[Users.id]
     }
@@ -41,15 +41,23 @@ class UserService {
         }
     }
 
-    suspend fun update(id: Long, newUser: User) {
+    suspend fun updateRefreshToken(userEmail: String, newRefreshToken: String) {
         dbQuery {
-            Users.update({ Users.id eq id }) {
-                it[email] = newUser.email
-                it[password] = hashPassword(newUser.password)
-                it[name] = newUser.name
+            Users.update({ Users.email eq userEmail }) {
+                it[refreshToken] = newRefreshToken
             }
         }
     }
+
+//    suspend fun update(userEmail: String, newUserInfo: User) {
+//        dbQuery {
+//            Users.update({ Users.email eq userEmail }) {
+//                it[email] = newUserInfo.email
+//                it[password] = hashPassword(newUserInfo.password)
+//                it[name] = newUserInfo.name
+//            }
+//        }
+//    }
 
     suspend fun delete(id: Long) {
         dbQuery {
@@ -61,16 +69,20 @@ class UserService {
         Users.selectAll().where { Users.email eq email }.map(::rowToUser).singleOrNull()
     }
 
+//    suspend fun userByRefreshToken(refreshToken: String): User? = dbQuery {
+//        Users.selectAll().where { Users.refreshToken eq refreshToken }.map(::rowToUser).singleOrNull()
+//    }
+
     private suspend fun <T> dbQuery(block: suspend () -> T): T =
         newSuspendedTransaction(Dispatchers.IO) { block() }
 
     private fun rowToUser(row: ResultRow) = User(
         id = row[Users.id],
         email = row[Users.email],
-        password = row[Users.password],
-        authToken = row[Users.authToken],
         name = row[Users.name],
+        password = row[Users.password],
         createdAt = row[Users.createdAt],
+        refreshToken = row[Users.refreshToken],
     )
 }
 

@@ -8,7 +8,7 @@ data class User(
     val password: String,
     val name: String,
     val createdAt: LocalDateTime,
-    val authToken: String? = null,
+    val refreshToken: String? = null,
 )
 
 data class RegisterUserParams(

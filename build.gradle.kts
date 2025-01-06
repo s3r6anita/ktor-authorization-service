@@ -4,6 +4,7 @@ val kotlin_version: String by project
 val logback_version: String by project
 val postgres_version: String by project
 val argon2_version: String by project
+val jedis_version: String by project
 
 plugins {
     kotlin("jvm") version "2.1.0"
@@ -38,6 +39,7 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm")
 
     implementation("de.mkammerer:argon2-jvm:2.11")
+    implementation("redis.clients:jedis:$jedis_version")
 
     implementation("org.jetbrains.exposed:exposed-core:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposed_version")

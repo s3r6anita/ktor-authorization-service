@@ -2,22 +2,25 @@ package ru.countrystats.repository
 
 import io.ktor.http.*
 import org.jetbrains.exposed.exceptions.ExposedSQLException
+import ru.countrystats.cache.RedisTokenStore
 import ru.countrystats.database.UserService
 import ru.countrystats.database.model.LoginUserParams
 import ru.countrystats.database.model.RegisterUserParams
+import ru.countrystats.security.JwtConfig
 import ru.countrystats.util.BaseResponse
-import ru.countrystats.util.checkPassword
+import ru.countrystats.security.checkPassword
 import ru.countrystats.util.isValidEmail
 
 interface IUserRepository {
     suspend fun registerUser(params: RegisterUserParams): BaseResponse<Any>
     suspend fun loginUser(params: LoginUserParams): BaseResponse<Any>
-    suspend fun refreshUserToken(params: TokenPair): BaseResponse<Any>
+    suspend fun refreshUserToken(refreshToken: String): BaseResponse<Any>
 }
 
 
 class UserRepository(
-    private val userService: UserService = UserService()
+    private val userService: UserService = UserService(),
+    private val tokenStore: RedisTokenStore = RedisTokenStore(),
 ) : IUserRepository {
 
     override suspend fun registerUser(params: RegisterUserParams): BaseResponse<Any> {
@@ -29,12 +32,17 @@ class UserRepository(
                 )
             } else {
                 try {
-                    userService.create(params)
-                    BaseResponse.SuccessResponse()
-//                    логика создания и возврата токена
-//                    val token = JwtConfig.instance.generateToken(user.email)
-//                    InMemoryCache.tokens.add(TokenPair(user.email, token))
-//                    BaseResponse.SuccessResponse(data = hashMapOf("token" to token))
+                    val refreshToken = JwtConfig.instance.generateRefreshToken(params.email)
+                    userService.create(params, refreshToken)
+
+                    val token = JwtConfig.instance.generateAccessToken(params.email)
+                    tokenStore.addToken(params.email, token)
+                    BaseResponse.SuccessResponse(
+                        data = hashMapOf(
+                            "access_token" to token,
+                            "refresh_token" to refreshToken
+                        )
+                    )
                 } catch (e: ExposedSQLException) {
                     BaseResponse.ErrorResponse(msg = "You are already registered")
                 }
@@ -49,11 +57,17 @@ class UserRepository(
             val user = userService.userByEmail(params.email)
             if (user != null) {
                 if (checkPassword(params.password, user.password)) {
-                    BaseResponse.SuccessResponse()
-//                    логика создания и возврата токена
-//                    val token = JwtConfig.instance.generateToken(user.email)
-//                    InMemoryCache.tokens.add(TokenPair(user.email, token))
-//                    BaseResponse.SuccessResponse(data = hashMapOf("token" to token))
+                    val refreshToken = JwtConfig.instance.generateRefreshToken(params.email)
+                    userService.updateRefreshToken(params.email, refreshToken)
+
+                    val token = JwtConfig.instance.generateAccessToken(user.email)
+                    tokenStore.addToken(params.email, token)
+                    BaseResponse.SuccessResponse(
+                        data = hashMapOf(
+                            "access_token" to token,
+                            "refresh_token" to refreshToken
+                        )
+                    )
                 } else {
                     BaseResponse.ErrorResponse(msg = "Invalid password")
                 }
@@ -65,21 +79,17 @@ class UserRepository(
         }
     }
 
-    override suspend fun refreshUserToken(params: TokenPair): BaseResponse<Any> {
-        TODO("Not yet implemented")
+    override suspend fun refreshUserToken(email: String): BaseResponse<Any> {
+        val user = userService.userByEmail(email)
+        return if (user != null) {
+            tokenStore.removeToken(email)
+            val newToken = JwtConfig.instance.generateAccessToken(email)
+            tokenStore.addToken(email, newToken)
+            BaseResponse.SuccessResponse(data = hashMapOf("token" to newToken))
+        } else {
+            BaseResponse.ErrorResponse(msg = "No user with this email or refresh token")
+        }
     }
-
-//    override suspend fun refreshTokenUser(params: TokenPair): BaseResponse<Any> {
-//        val tokenPair = InMemoryCache.tokens.firstOrNull{ it == params }
-//        return if (tokenPair != null) {
-//            InMemoryCache.tokens.remove(tokenPair)
-//            val newToken = JwtConfig.instance.generateToken(params.email)
-//            InMemoryCache.tokens.add(TokenPair(params.email, newToken))
-//            BaseResponse.SuccessResponse(data = params, hash = hashMapOf("token" to newToken))
-//        } else {
-//            BaseResponse.ErrorResponse(msg = "Invalid email or token")
-//        }
-//    }
 
     private suspend fun isEmailExist(email: String): Boolean = userService.userByEmail(email) != null
 }

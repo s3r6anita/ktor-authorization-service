@@ -17,13 +17,13 @@ fun Application.configureDatabases(embedded: Boolean = false) {
             password = "",
         )
     } else {
-        val url = environment.config.property("postgres.url").getString()
+        val url = environment.config.property("ktor.postgres.url").getString()
         log.info("Connecting to postgres database at $url")
 
         Database.connect(
             url = url,
-            user = environment.config.property("postgres.user").getString(),
-            password = environment.config.property("postgres.password").getString(),
+            user = environment.config.property("ktor.postgres.user").getString(),
+            password = environment.config.property("ktor.postgres.password").getString(),
         )
     }
 
