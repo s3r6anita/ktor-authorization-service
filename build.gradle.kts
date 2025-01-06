@@ -5,6 +5,8 @@ val logback_version: String by project
 val postgres_version: String by project
 val argon2_version: String by project
 val jedis_version: String by project
+val hikaricp_version: String by project
+val ehcache_version: String by project
 
 plugins {
     kotlin("jvm") version "2.1.0"
@@ -46,6 +48,10 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-java-time:$exposed_version")
     implementation("org.postgresql:postgresql:$postgres_version")
     implementation("com.h2database:h2:$h2_version")
+
+
+    implementation("com.zaxxer:HikariCP:$hikaricp_version")
+    implementation("org.ehcache:ehcache:$ehcache_version")
 
     implementation("io.ktor:ktor-server-netty-jvm")
     implementation("ch.qos.logback:logback-classic:$logback_version")

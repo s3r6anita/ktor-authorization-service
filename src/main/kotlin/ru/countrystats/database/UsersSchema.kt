@@ -27,7 +27,7 @@ class UserService {
         Users.insert {
             it[email] = user.email
             it[password] = hashPassword(user.password)
-            it[refreshToken] = token
+            it[refreshToken] = hashPassword(token)
             it[name] = user.name
         }[Users.id]
     }
@@ -44,7 +44,7 @@ class UserService {
     suspend fun updateRefreshToken(userEmail: String, newRefreshToken: String) {
         dbQuery {
             Users.update({ Users.email eq userEmail }) {
-                it[refreshToken] = newRefreshToken
+                it[refreshToken] = hashPassword(newRefreshToken)
             }
         }
     }

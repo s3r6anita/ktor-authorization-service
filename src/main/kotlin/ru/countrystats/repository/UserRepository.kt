@@ -85,7 +85,7 @@ class UserRepository(
             tokenStore.removeToken(email)
             val newToken = JwtConfig.instance.generateAccessToken(email)
             tokenStore.addToken(email, newToken)
-            BaseResponse.SuccessResponse(data = hashMapOf("token" to newToken))
+            BaseResponse.SuccessResponse(data = hashMapOf("access_token" to newToken))
         } else {
             BaseResponse.ErrorResponse(msg = "No user with this email or refresh token")
         }

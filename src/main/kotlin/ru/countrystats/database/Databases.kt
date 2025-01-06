@@ -1,6 +1,9 @@
 package ru.countrystats.database
 
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.application.*
+import io.ktor.server.config.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -17,16 +20,23 @@ fun Application.configureDatabases(embedded: Boolean = false) {
             password = "",
         )
     } else {
-        val url = environment.config.property("ktor.postgres.url").getString()
-        log.info("Connecting to postgres database at $url")
-
         Database.connect(
-            url = url,
+            driver = environment.config.property("ktor.postgres.driverClassName").getString(),
+            url = environment.config.property("ktor.postgres.url").getString(),
             user = environment.config.property("ktor.postgres.user").getString(),
             password = environment.config.property("ktor.postgres.password").getString(),
         )
+//        Database.connect(HikariDataSource(HikariConfig().apply {
+//            driverClassName = environment.config.property("ktor.postgres.driverClassName").getString()
+//            jdbcUrl = environment.config.property("ktor.postgres.url").getString()
+//            username = environment.config.property("ktor.postgres.user").getString()
+//            password = environment.config.property("ktor.postgres.password").getString()
+//            maximumPoolSize = 3
+//            isAutoCommit = false
+//            transactionIsolation = "TRANSACTION_REPEATABLE_READ"
+//            validate()
+//        }))
     }
-
     transaction {
         SchemaUtils.create(Users)
     }
