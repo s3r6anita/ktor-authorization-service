@@ -7,7 +7,7 @@ import java.io.File
 
 fun ApplicationEngine.Configuration.envConfig(config: ApplicationConfig) {
 
-    val keyStoreFile = File("keystore.jks")
+    val keyStoreFile = File("build/keystore.jks")
     val keyStore = buildKeyStore {
         certificate("sampleAlias") {
             password = config.property("ktor.security.ssl.privateKeyPassword").getString()

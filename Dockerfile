@@ -14,8 +14,6 @@ COPY . /usr/src/app/
 WORKDIR /usr/src/app
 COPY --chown=gradle:gradle . /home/gradle/src
 WORKDIR /home/gradle/src
-# Build the fat JAR, Gradle also supports shadow
-# and boot JAR by default.
 RUN gradle buildFatJar --no-daemon
 
 # Stage 3: Create the Runtime Image

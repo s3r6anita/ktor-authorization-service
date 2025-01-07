@@ -1,1 +1,0 @@
-web: ./build/install/ru.countrystats.ktor-authorization-service/bin/ru.countrystats.ktor-authorization-service
