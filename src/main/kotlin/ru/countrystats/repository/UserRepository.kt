@@ -14,7 +14,8 @@ import ru.countrystats.util.isValidEmail
 interface IUserRepository {
     suspend fun registerUser(params: RegisterUserParams): BaseResponse<Any>
     suspend fun loginUser(params: LoginUserParams): BaseResponse<Any>
-    suspend fun refreshUserToken(refreshToken: String): BaseResponse<Any>
+    suspend fun refreshUserToken(email: String): BaseResponse<Any>
+    suspend fun getUserInfo(email: String): BaseResponse<Any>
 }
 
 
@@ -88,6 +89,15 @@ class UserRepository(
             BaseResponse.SuccessResponse(data = hashMapOf("access_token" to newToken))
         } else {
             BaseResponse.ErrorResponse(msg = "No user with this email or refresh token")
+        }
+    }
+
+    override suspend fun getUserInfo(email: String): BaseResponse<Any> {
+        val user = userService.userByEmail(email)
+        return if (user != null) {
+            BaseResponse.SuccessResponse(data = user)
+        } else {
+            BaseResponse.ErrorResponse(msg = "Incorrect email or token")
         }
     }
 

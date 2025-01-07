@@ -34,4 +34,12 @@ fun Route.authRoutes(
             call.respond(result.statusCode, result)
         }
     }
+    authenticate("access") {
+        get("/userInfo") {
+            val principal = call.principal<JWTPrincipal>()
+            val email = principal!!.payload.getClaim(claim).asString()
+            val result = repository.getUserInfo(email)
+            call.respond(result.statusCode, result)
+        }
+    }
 }
