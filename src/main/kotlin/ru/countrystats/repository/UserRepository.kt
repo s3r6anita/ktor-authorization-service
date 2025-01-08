@@ -1,6 +1,7 @@
 package ru.countrystats.repository
 
 import io.ktor.http.*
+import io.ktor.server.config.*
 import org.jetbrains.exposed.exceptions.ExposedSQLException
 import ru.countrystats.cache.RedisTokenStore
 import ru.countrystats.database.UserService
@@ -20,8 +21,9 @@ interface IUserRepository {
 
 
 class UserRepository(
+    config: ApplicationConfig,
     private val userService: UserService = UserService(),
-    private val tokenStore: RedisTokenStore = RedisTokenStore(),
+    private val tokenStore: RedisTokenStore = RedisTokenStore(config),
 ) : IUserRepository {
 
     override suspend fun registerUser(params: RegisterUserParams): BaseResponse<Any> {
@@ -60,6 +62,8 @@ class UserRepository(
                 if (checkPassword(params.password, user.password)) {
                     val refreshToken = JwtConfig.instance.generateRefreshToken(params.email)
                     userService.updateRefreshToken(params.email, refreshToken)
+
+                    tokenStore.removeToken(params.email)
 
                     val token = JwtConfig.instance.generateAccessToken(user.email)
                     tokenStore.addToken(params.email, token)

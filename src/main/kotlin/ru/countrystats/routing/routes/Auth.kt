@@ -13,7 +13,7 @@ import ru.countrystats.repository.UserRepository
 
 fun Route.authRoutes(
     config: ApplicationConfig,
-    repository: IUserRepository = UserRepository(),
+    repository: IUserRepository = UserRepository(config),
     claim: String = config.property("ktor.security.jwt.claim").getString()
 ) {
     post("/register") {

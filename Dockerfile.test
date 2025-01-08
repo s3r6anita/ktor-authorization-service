@@ -1,0 +1,4 @@
+FROM gradle:latest AS test
+WORKDIR /app
+COPY . .
+CMD ["gradle", "test", "--no-daemon"]

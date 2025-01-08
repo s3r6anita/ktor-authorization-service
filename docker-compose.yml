@@ -32,6 +32,16 @@ services:
       - 6379
     networks:
       - ktor-network
+#  test:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile.test
+#    env_file:
+#      - web.env
+#    depends_on:
+#      - web
+#    networks:
+#      - ktor-network
 networks:
   ktor-network:
     driver: bridge

@@ -18,6 +18,7 @@ class JwtConfig private constructor() {
             .require(accessAlgorithm)
             .withAudience(audience)
             .withIssuer(issuer)
+            .withClaimPresence(claim)
             .build()
 
     val refreshVerifier: JWTVerifier =
@@ -25,6 +26,7 @@ class JwtConfig private constructor() {
             .require(refreshAlgorithm)
             .withAudience(audience)
             .withIssuer(issuer)
+            .withClaimPresence(claim)
             .build()
 
     fun generateAccessToken(email: String): String =

@@ -59,9 +59,9 @@ class UserService {
 //        }
 //    }
 
-    suspend fun delete(id: Long) {
+    suspend fun delete(deleteEmail: String) {
         dbQuery {
-            Users.deleteWhere { Users.id eq id }
+            Users.deleteWhere { Users.email eq deleteEmail }
         }
     }
 
